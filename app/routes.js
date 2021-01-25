@@ -1,5 +1,6 @@
 var Care = require('./models/care');
 const { v4: uuidv4 } = require('uuid');
+const _ = require('lodash');
 
 function getAllData(res) {
 	Care.find(function (err, todos) {
@@ -12,15 +13,41 @@ function getAllData(res) {
 	});
 }
 
-function findUser(phone) {
-	Care.findOne({ phone: phone }, function (err, doc) {
-		console.log(doc);
-		if (err) {
-			return false;
-		} else {
-			return true;
-		}
-	});
+function getSingleItemData(req, res, type) {
+	const Id = req.body['_id'] || null;
+	if (Id) {
+		Care.findOne({ _id: Id }, function (err, doc) {
+			if (err) {
+				res.send(err);
+			} else {
+				const date = req.body.date;
+				let dataIndex = _.findIndex(doc.data, (o) => {
+					return o.date === date;
+				});
+				if (doc.data && _.isArray(doc.data)) {
+					if (dataIndex !== -1 && _.isArray(doc.data[dataIndex][type])) {
+						res.send({
+							msg: '查询完毕！',
+							success: true,
+							callback: doc.data[dataIndex][type],
+						});
+					} else {
+						res.send({
+							msg: '查询完毕！',
+							success: true,
+							callback: { [type]: null },
+						});
+					}
+				} else {
+					res.send({
+						msg: '查询完毕！',
+						success: true,
+						callback: { data: null },
+					});
+				}
+			}
+		});
+	}
 }
 
 module.exports = function (app) {
@@ -70,7 +97,6 @@ module.exports = function (app) {
 		Care.findOne({ phone: req.body['phone'] }, function (err, doc) {
 			if (!doc) {
 				let newId = uuidv4();
-				console.log(newId);
 				new Care({
 					_id: newId,
 					phone: req.body['phone'],
@@ -109,6 +135,27 @@ module.exports = function (app) {
 		});
 	});
 
+	app.post('/get/user/data', function (req, res) {
+		if (req.body['_id']) {
+			Care.findOne({ _id: req.body['_id'] }, function (err, doc) {
+				if (err) {
+					res.send(err);
+				} else {
+					res.send({
+						msg: '获取成功！',
+						sucess: true,
+						callback: doc,
+					});
+				}
+			});
+		} else {
+			res.send({
+				msg: '没有_id值!',
+				error: true,
+			});
+		}
+	});
+
 	app.post('/update/user/phone', function (req, res) {
 		Care.findOne({ _id: req.body['_id'] }, function (err, doc) {
 			if (err) {
@@ -122,6 +169,24 @@ module.exports = function (app) {
 				});
 			}
 		});
+	});
+	/**
+	 * 单独添加各项数据
+	 */
+	app.post('/get/feed', function (req, res) {
+		getSingleItemData(req, res, 'feed');
+	});
+	app.post('/get/poo', function (req, res) {
+		getSingleItemData(req, res, 'poo');
+	});
+	app.post('/get/sleep', function (req, res) {
+		getSingleItemData(req, res, 'sleep');
+	});
+	app.post('/get/temperture', function (req, res) {
+		getSingleItemData(req, res, 'temperture');
+	});
+	app.post('/get/note', function (req, res) {
+		getSingleItemData(req, res, 'note');
 	});
 
 	app.delete('/remove/test', function (req, res) {
