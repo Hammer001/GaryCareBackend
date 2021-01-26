@@ -13,43 +13,6 @@ function getAllData(res) {
 	});
 }
 
-function getSingleItemData(req, res, type) {
-	const Id = req.body['_id'] || null;
-	if (Id) {
-		Care.findOne({ _id: Id }, function (err, doc) {
-			if (err) {
-				res.send(err);
-			} else {
-				const date = req.body.date;
-				let dataIndex = _.findIndex(doc.data, (o) => {
-					return o.date === date;
-				});
-				if (doc.data && _.isArray(doc.data)) {
-					if (dataIndex !== -1 && _.isArray(doc.data[dataIndex][type])) {
-						res.send({
-							msg: '查询完毕！',
-							success: true,
-							callback: doc.data[dataIndex][type],
-						});
-					} else {
-						res.send({
-							msg: '查询完毕！',
-							success: true,
-							callback: { [type]: null },
-						});
-					}
-				} else {
-					res.send({
-						msg: '查询完毕！',
-						success: true,
-						callback: { data: null },
-					});
-				}
-			}
-		});
-	}
-}
-
 module.exports = function (app) {
 	// api ---------------------------------------------------------------------
 	// get all todos
@@ -169,24 +132,6 @@ module.exports = function (app) {
 				});
 			}
 		});
-	});
-	/**
-	 * 单独添加各项数据
-	 */
-	app.post('/get/feed', function (req, res) {
-		getSingleItemData(req, res, 'feed');
-	});
-	app.post('/get/poo', function (req, res) {
-		getSingleItemData(req, res, 'poo');
-	});
-	app.post('/get/sleep', function (req, res) {
-		getSingleItemData(req, res, 'sleep');
-	});
-	app.post('/get/temperture', function (req, res) {
-		getSingleItemData(req, res, 'temperture');
-	});
-	app.post('/get/note', function (req, res) {
-		getSingleItemData(req, res, 'note');
 	});
 
 	app.delete('/remove/test', function (req, res) {
