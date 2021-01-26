@@ -2,12 +2,18 @@
 var express = require('express');
 var app = express(); 						// create our app w/ express
 var mongoose = require('mongoose'); 				// mongoose for mongodb
-var port = process.env.PORT || 8080; 				// set the port
+var port = process.env.PORT || 80; 				// set the port
 var database = require('./config/database'); 			// load the database config
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
+var https = require('https');
 const helmet = require("helmet");
+
+let options = {
+    key: fs.readFileSync('app/ssl/2_www.garycaremini.xyz.crt'),
+    cert: fs.readFileSync('app/ssl/3_www.garycaremini.xyz.key')
+}
 
 // configuration ===============================================================
 mongoose.connect(database.localUrl); 	// Connect to local MongoDB instance. A remoteUrl is also available (modulus.io)
@@ -24,5 +30,6 @@ app.use(helmet());
 require('./app/routes.js')(app);
 
 // listen (start app with node server.js) ======================================
-app.listen(port);
+var httpsServer = https.createServer(options,app);
+httpsServer.listen(port);
 console.log("App listening on port " + port);
