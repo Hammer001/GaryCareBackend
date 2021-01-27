@@ -1,6 +1,7 @@
 var Care = require('./models/care');
 const { v4: uuidv4 } = require('uuid');
 const _ = require('lodash');
+const Controllers = require('./controllers');
 
 function getAllData(res) {
 	Care.find(function (err, todos) {
@@ -22,103 +23,18 @@ module.exports = function (app) {
 		getAllData(res);
 	});
 
-	app.post('/findPhone', function (req, res) {
-		Care.findOne({ phone: req.body['phone'] }, function (err, doc) {
-			if (!doc) {
-				res.send({
-					msg: '手机号可用',
-					usable: true,
-				});
-			} else {
-				res.send({
-					msg: '手机已被注册',
-					code: 'phone-registered',
-					_id: doc._id,
-					usable: false,
-				});
-			}
-		});
-	});
-	app.post('/signin', function (req, res) {
-		Care.findById(req.body['_id'], function (err, doc) {
-			if (err) {
-				res.status(400).send(err);
-			} else {
-				if (doc && req.body['pass'] === doc.pass) {
-					res.status(200).send(doc);
-				} else {
-					res.status(401).send({
-						msg: '密码错误',
-						code: 'wrong-password',
-						error: true,
-					});
-				}
-			}
-		});
-	});
-	app.post('/signup', function (req, res) {
-		Care.findOne({ phone: req.body['phone'] }, function (err, doc) {
-			if (!doc) {
-				let newId = uuidv4();
-				new Care({
-					_id: newId,
-					phone: req.body['phone'],
-					pass: req.body['pass'],
-				}).save(function (err, doc) {
-					if (err) {
-						res.send(err);
-					} else {
-						res.send(doc);
-					}
-				});
-			} else {
-				res.send({
-					msg: '手机已被注册',
-					code: 'phone-registered',
-					error: true,
-				});
-			}
-		});
-	});
+    //正式小程序使用接口
+	app.post('/findPhone', Controllers.findPhone);
 
-	app.post('/update/user/data', function (req, res) {
-		Care.findOne({ _id: req.body['_id'] }, function (err, doc) {
-			if (err) {
-				res.send(err);
-			} else {
-				if (req.body['data']) {
-					doc.data = req.body['data'];
-					doc.save();
-					res.send({
-						msg: '更新成功',
-						callback: doc,
-					});
-				}
-			}
-		});
-	});
+	app.post('/signin', Controllers.signIn);
 
-	app.post('/get/user/data', function (req, res) {
-		if (req.body['_id']) {
-			Care.findOne({ _id: req.body['_id'] }, function (err, doc) {
-				if (err) {
-					res.send(err);
-				} else {
-					res.send({
-						msg: '获取成功！',
-						sucess: true,
-						callback: doc,
-					});
-				}
-			});
-		} else {
-			res.send({
-				msg: '没有_id值!',
-				error: true,
-			});
-		}
-	});
+	app.post('/signup', Controllers.signUp);
 
+	app.post('/update/user/data', Controllers.updateUserData);
+
+	app.post('/get/user/data', Controllers.getUserData);
+
+      //测试或临时使用接口
 	app.post('/update/user/phone', function (req, res) {
 		Care.findOne({ _id: req.body['_id'] }, function (err, doc) {
 			if (err) {
